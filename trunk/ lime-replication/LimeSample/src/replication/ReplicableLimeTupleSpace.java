@@ -1,12 +1,16 @@
 package replication;
 
 import lights.interfaces.ITuple;
-import lights.interfaces.ITupleSpace;
 import lime.AgentLocation;
 import lime.IllegalTupleSpaceNameException;
-import lime.LimeServer;
 import lime.LimeTupleSpace;
+import lime.NoSuchReactionException;
+import lime.Reaction;
+import lime.ReactionEvent;
+import lime.ReactionListener;
+import lime.RegisteredReaction;
 import lime.TupleSpaceEngineException;
+import lime.UbiquitousReaction;
 
 public class ReplicableLimeTupleSpace{
 	private LimeTupleSpace lts;
@@ -17,14 +21,12 @@ public class ReplicableLimeTupleSpace{
 	public static final int CONSISTENCY_MODE_ANY = 2;
 	public static final int CONSISTENCY_MODE_NEVER = 3;
 	
-	private int replicatemode;
-	private int consistencymode;
-	
 	private String name;
 	private int maxid;
 
 	public ReplicableLimeTupleSpace(String name) {
 		try {
+			maxid = 1;
 			lts = new LimeTupleSpace(name);
 			this.name = name;
 			initReaction();
@@ -113,14 +115,33 @@ public class ReplicableLimeTupleSpace{
 	public void removeWeakReaction(ReplicableRegisteredReaction[] rrr) {
 	}
 	// REPLICATION-SPECIFIC OPERATIONS
-	public ReplicableTuple change(ReplicableTuple template, ITuple t) {
+	public ReplicableTuple change(ReplicableTuple template, ReplicableTuple t) {
 		return null;
 	}
-	public RegisteredReplicaRequest addReplicaRequest(ITuple p,
+	
+	
+	public RegisteredReaction addReplicaRequest(ReplicableTuple template,
 			int replicationMode,
 			int consistencyMode) {
+		try {
+			Reaction reaction = new UbiquitousReaction(template,
+					new ReplicationListener(replicationMode, consistencyMode),
+					Reaction.ONCEPERTUPLE);
+			return lts.addWeakReaction(new Reaction[]{reaction})[0];
+		} catch (TupleSpaceEngineException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
-	public void removeReplicaRequest(RegisteredReplicaRequest r) {
+	
+	
+	public void removeReplicaRequest(RegisteredReaction r) {
+		try {
+			lts.removeWeakReaction(new RegisteredReaction[]{r});
+		} catch (TupleSpaceEngineException e) {
+			e.printStackTrace();
+		} catch (NoSuchReactionException e) {
+			e.printStackTrace();
+		}
 	}
 }

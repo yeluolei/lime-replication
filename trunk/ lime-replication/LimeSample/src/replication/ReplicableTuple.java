@@ -16,19 +16,23 @@ public class ReplicableTuple implements ITuple {
 	private Tuple tuple;
 	public static final int DEFAULT_VERSION = 1;
 	public static final int REPLICA_USED_LENTH = 5;
+	
+	public static final int IS_REPLICA_TAG = 2;
+	public static final int IS_REPLICA = 1;
+	public static final int IS_MASTER = 0;
 	@SuppressWarnings("rawtypes")
 	public ReplicableTuple(String name , int id){
 		tuple = new Tuple();
 		tuple.addFormal(AgentLocation.class);   // origCur
 		tuple.addFormal(AgentLocation.class);   // origDest
-		tuple.addFormal(Boolean.class);     // isReplica
+		tuple.addFormal(Integer.class);     // isReplica
 		tuple.addFormal(LimeTupleID.class); // ID
 		tuple.addFormal(Integer.class);		// Version
 		
 		
 		tuple.addActual(AgentLocation.UNSPECIFIED);
 		tuple.addActual(AgentLocation.UNSPECIFIED);
-		tuple.addActual(false);
+		tuple.addActual(1);
 		tuple.addActual(new LimeTupleID(id));
 		tuple.addActual(DEFAULT_VERSION);
 	}
@@ -89,6 +93,6 @@ public class ReplicableTuple implements ITuple {
 	
 	
 	public boolean isMaster(){
-		return !((Boolean) tuple.get(2).getValue());
+		return tuple.get(IS_REPLICA_TAG).getValue().equals(IS_MASTER);
 	}
 }
