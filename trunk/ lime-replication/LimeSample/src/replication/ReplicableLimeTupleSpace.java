@@ -1,9 +1,11 @@
 package replication;
 
-import lights.interfaces.ITuple;
+import lights.adapters.Tuple;
 import lime.AgentLocation;
+import lime.ILimeAgent;
 import lime.IllegalTupleSpaceNameException;
 import lime.LimeTupleSpace;
+import lime.LocalizedReaction;
 import lime.NoSuchReactionException;
 import lime.Reaction;
 import lime.ReactionEvent;
@@ -13,6 +15,7 @@ import lime.TupleSpaceEngineException;
 import lime.UbiquitousReaction;
 
 public class ReplicableLimeTupleSpace{
+    ILimeAgent creator = null;
 	private LimeTupleSpace lts;
 	
 	public static final int REPLICATION_MODE_MASTER = 1;
@@ -26,9 +29,11 @@ public class ReplicableLimeTupleSpace{
 
 	public ReplicableLimeTupleSpace(String name) {
 		try {
+			Thread t = Thread.currentThread();
 			maxid = 1;
 			lts = new LimeTupleSpace(name);
 			this.name = name;
+			creator = (ILimeAgent)t;
 			initReaction();
 		} catch (IllegalTupleSpaceNameException e) {
 			e.printStackTrace();
@@ -38,7 +43,9 @@ public class ReplicableLimeTupleSpace{
 	}
 	
 	public ReplicableTuple createReplicableTuple(){
-		return new ReplicableTuple(name, maxid);
+		ReplicableTuple ret =  new ReplicableTuple(name, maxid);
+		maxid += 1;
+		return ret;
 	}
 	
 	private void initReaction(){
@@ -47,72 +54,63 @@ public class ReplicableLimeTupleSpace{
 	public boolean setShared(boolean isShared) {
 		return lts.setShared(isShared);
 	}
-	public void out(ReplicableTuple t) {
-		try {
-			lts.out(t);
-		} catch (TupleSpaceEngineException e) {
-			e.printStackTrace();
+	public void out(ReplicableTuple t)
+	throws TupleSpaceEngineException {
+		lts.out(t.getTuple());
+	}
+	public void out(AgentLocation destination, ReplicableTuple t)
+	throws TupleSpaceEngineException {
+		lts.out(destination, t.getTuple());
+	}
+	public ReplicableTuple in(ReplicableTuple template) throws TupleSpaceEngineException {
+		return new ReplicableTuple(lts.in(template.getTuple()));
+	}
+	public ReplicableTuple inp(AgentLocation current,AgentLocation destination,ReplicableTuple template)
+	throws TupleSpaceEngineException{
+		return new ReplicableTuple(lts.inp(current, destination, template.getTuple()));
+	}
+	public ReplicableTuple[] ing(AgentLocation current, AgentLocation destination ,ReplicableTuple template)
+	throws TupleSpaceEngineException {
+		Tuple[] retTuples = (Tuple[]) lts.ing(current, destination, template.getTuple());
+		ReplicableTuple[] result = new ReplicableTuple[retTuples.length];
+		for (int i = 0 ; i < retTuples.length ; i++){
+			result[i] = new ReplicableTuple(retTuples[i]);
 		}
+		return result;
 	}
-	public void out(AgentLocation destination, ReplicableTuple t) {
-		try {
-			lts.out(destination, t);
-		} catch (TupleSpaceEngineException e) {
-			e.printStackTrace();
+	
+	public ReplicableTuple rd(ReplicableTuple template)
+	throws TupleSpaceEngineException {
+		return new ReplicableTuple(lts.rd(template.getTuple()));
+	}
+	public ReplicableTuple rdp(AgentLocation current,AgentLocation destination,ReplicableTuple template)
+	throws TupleSpaceEngineException {
+		return new ReplicableTuple(lts.rdp(current, destination, template.getTuple()));
+	}
+	public ReplicableTuple[] rdg(AgentLocation current, AgentLocation destination ,ReplicableTuple template) 
+	throws TupleSpaceEngineException {
+		Tuple[] retTuples = (Tuple[]) lts.rdg(current, destination, template.getTuple());
+		ReplicableTuple[] result = new ReplicableTuple[retTuples.length];
+		for (int i = 0 ; i < retTuples.length ; i++){
+			result[i] = new ReplicableTuple(retTuples[i]);
 		}
+		return result;
 	}
-	public ReplicableTuple in(ReplicableTuple template) {
-		try {
-			return (ReplicableTuple) lts.in(template);
-		} catch (TupleSpaceEngineException e) {
-			e.printStackTrace();
-		}
-		return null;
+	public RegisteredReaction[] addStrongReaction(LocalizedReaction[] lr) 
+	throws TupleSpaceEngineException {
+		return lts.addStrongReaction(lr);
 	}
-	public ReplicableTuple inp(AgentLocation current,AgentLocation destination,ReplicableTuple template){
-		try {
-			return (ReplicableTuple) lts.inp(current, destination, template);
-		} catch (TupleSpaceEngineException e) {
-			e.printStackTrace();
-		}
-		return null;
+	public RegisteredReaction[] addWeakReaction(Reaction[] r) 
+	throws TupleSpaceEngineException {
+		return lts.addWeakReaction(r);
 	}
-	public ReplicableTuple[] ing(ReplicableTuple p) {
-		return null;
+	public void removeStrongReaction(RegisteredReaction[] rr)
+	throws TupleSpaceEngineException, NoSuchReactionException {
+		lts.removeStrongReaction(rr);
 	}
-	public ReplicableTuple rd(ReplicableTuple template) {
-		try {
-			return (ReplicableTuple) lts.rd(template);
-		} catch (TupleSpaceEngineException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	public ReplicableTuple rdp(AgentLocation current,AgentLocation destination,ReplicableTuple template) {
-		try {
-			return (ReplicableTuple) lts.rdp(current, destination, template);
-		} catch (TupleSpaceEngineException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	public ReplicableTuple[] rdg(AgentLocation current, AgentLocation destination ,ReplicableTuple template) {
-		try {
-			return (ReplicableTuple[]) lts.rdg(current, destination, template);
-		} catch (TupleSpaceEngineException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	public ReplicableRegisteredReaction[] addStrongReaction(ReplicableLocalizedReaction[] rlr) {
-		return null;
-	}
-	public ReplicableRegisteredReaction[] addWeakReaction(ReplicableReaction[] rr) {
-		return null;
-	}
-	public void removeStrongReaction(ReplicableRegisteredReaction[] rrr) {
-	}
-	public void removeWeakReaction(ReplicableRegisteredReaction[] rrr) {
+	public void removeWeakReaction(RegisteredReaction[] rr)
+	throws TupleSpaceEngineException, NoSuchReactionException {
+		lts.removeWeakReaction(rr);
 	}
 	// REPLICATION-SPECIFIC OPERATIONS
 	public ReplicableTuple change(ReplicableTuple template, ReplicableTuple t) {
@@ -124,8 +122,8 @@ public class ReplicableLimeTupleSpace{
 			int replicationMode,
 			int consistencyMode) {
 		try {
-			Reaction reaction = new UbiquitousReaction(template,
-					new ReplicationListener(replicationMode, consistencyMode),
+			Reaction reaction = new UbiquitousReaction(template.getTuple(),
+					new ReplicationListener(replicationMode, consistencyMode,template),
 					Reaction.ONCEPERTUPLE);
 			return lts.addWeakReaction(new Reaction[]{reaction})[0];
 		} catch (TupleSpaceEngineException e) {
@@ -143,5 +141,93 @@ public class ReplicableLimeTupleSpace{
 		} catch (NoSuchReactionException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	@SuppressWarnings("serial")
+	class ReplicationListener implements ReactionListener {
+		private int replicationMode;
+		private int consistencyMode;
+		private AgentLocation local;
+		private ReplicableTuple template;
+		public ReplicationListener(int repmode, int conmode , ReplicableTuple template) {
+			this.replicationMode = repmode;
+			this.consistencyMode = conmode;
+			this.template = template;
+			local = new AgentLocation(creator.getMgr().getID()); 
+		}
+
+		@Override
+		public void reactsTo(ReactionEvent e) {
+			ReplicableTuple tuple = (ReplicableTuple) e.getEventTuple();
+			// if is local, do nothing
+			if (!tuple.getCur().equals(local)) {
+				switch (replicationMode) {
+				case ReplicableLimeTupleSpace.REPLICATION_MODE_MASTER: {
+					if (tuple.isMaster()) {
+						cons(tuple);
+					}
+					break;
+				}
+				case ReplicableLimeTupleSpace.REPLICATION_MODE_ANY: {
+					cons(tuple);
+					break;
+				}
+				}
+			}
+		}
+
+		private void cons(ReplicableTuple tuple) {
+			// 从自己的空间中找到ID相同的
+			// 根据
+			ReplicableTuple localmatch = null;
+			try {
+				template.setID(tuple.getID());
+				localmatch = (ReplicableTuple) lts.rdp(local,
+						AgentLocation.UNSPECIFIED, template.getTuple());
+			} catch (TupleSpaceEngineException e) {
+				e.printStackTrace();
+			}
+			if (localmatch == null) {
+				try {
+					out(tuple);
+				} catch (TupleSpaceEngineException e) {
+					e.printStackTrace();
+				}
+			} else {
+				// 如果本地已经有一个备份，检查版本
+				// 如果版本号大于本地版本，更新
+				if (tuple.getVersion() > localmatch.getVersion()) {
+					switch (consistencyMode) {
+					case ReplicableLimeTupleSpace.CONSISTENCY_MODE_ANY: {
+						try {
+							lts.in(localmatch.getTuple()); // remove the old copy
+							lts.out(tuple.getTuple());     //  add the new copy
+						} catch (TupleSpaceEngineException e) {
+							e.printStackTrace();
+						}
+						break;
+					}
+					case ReplicableLimeTupleSpace.CONSISTENCY_MODE_MASTER: {
+						if (tuple.isMaster()){
+							try {
+								lts.in(localmatch.getTuple()); // remove the old copy
+								lts.out(tuple.getTuple());     //  add the new copy
+							} catch (TupleSpaceEngineException e) {
+								e.printStackTrace();
+							}
+						}
+						break;
+					}
+					case ReplicableLimeTupleSpace.CONSISTENCY_MODE_NEVER: {
+						break;
+					}
+					}
+				}
+			}
+		}
+	}
+
+	public void print() {
+		lts.print();
 	}
 }
