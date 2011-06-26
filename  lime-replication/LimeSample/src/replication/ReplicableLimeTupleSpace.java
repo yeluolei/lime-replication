@@ -1,9 +1,12 @@
 package replication;
 
 import lights.adapters.Tuple;
+import lights.interfaces.ITuple;
 import lime.AgentLocation;
+import lime.HostLocation;
 import lime.ILimeAgent;
 import lime.IllegalTupleSpaceNameException;
+import lime.LimeServer;
 import lime.LimeTupleSpace;
 import lime.LocalizedReaction;
 import lime.NoSuchReactionException;
@@ -26,12 +29,11 @@ public class ReplicableLimeTupleSpace{
 	public static final int CONSISTENCY_MODE_NEVER = 3;
 	
 	private String name;
-	private int maxid;
+	private static int maxid = 1;
 
 	public ReplicableLimeTupleSpace(String name) {
 		try {
 			Thread t = Thread.currentThread();
-			maxid = 1;
 			lts = new LimeTupleSpace(name);
 			this.name = name;
 			creator = (ILimeAgent)t;
@@ -67,9 +69,9 @@ public class ReplicableLimeTupleSpace{
 	public ReplicableTuple in(ReplicableTuple template) throws TupleSpaceEngineException {
 		return new ReplicableTuple(lts.in(template.getTuple()));
 	}
-	public ReplicableTuple inp(AgentLocation current,AgentLocation destination,ReplicableTuple template)
+	public ReplicableTuple inp(HostLocation hostLocation,AgentLocation destination,ReplicableTuple template)
 	throws TupleSpaceEngineException{
-		return new ReplicableTuple(lts.inp(current, destination, template.getTuple()));
+		return new ReplicableTuple(lts.inp(hostLocation, destination, template.getTuple()));
 	}
 	public ReplicableTuple[] ing(AgentLocation current, AgentLocation destination ,ReplicableTuple template)
 	throws TupleSpaceEngineException {
@@ -163,7 +165,6 @@ public class ReplicableLimeTupleSpace{
 	class ReplicationListener implements ReactionListener {
 		private int replicationMode;
 		private int consistencyMode;
-
 		private ReplicableTuple template;
 		public ReplicationListener(int repmode, int conmode , ReplicableTuple template) {
 			this.replicationMode = repmode;
@@ -174,19 +175,79 @@ public class ReplicableLimeTupleSpace{
 		@Override
 		public void reactsTo(ReactionEvent e) {
 			ReplicableTuple tuple = new ReplicableTuple(e.getEventTuple());
+			System.out.println(e.getEventTuple().toString()+"\n");
 			// if is local, do nothing
 			if (!tuple.getCur().equals(local)) {
+				boolean entercon = false;
 				switch (replicationMode) {
 				case ReplicableLimeTupleSpace.REPLICATION_MODE_MASTER: {
 					if (tuple.isMaster()) {
-						cons(tuple);
+						entercon =true;
 					}
 					break;
 				}
 				case ReplicableLimeTupleSpace.REPLICATION_MODE_ANY: {
-					cons(tuple);
+					entercon =true;
 					break;
 				}
+				}
+				
+				if (entercon){
+					ReplicableTuple localmatch = null;
+					try {
+						ReplicableTuple t = new ReplicableTuple(template.getTuple());
+						t.setID(tuple.getID());
+						Tuple temp = (Tuple) lts.rdp(local,
+								AgentLocation.UNSPECIFIED, t.getTuple());
+						if (temp != null){
+							localmatch = new ReplicableTuple(temp);
+						}
+					} catch (TupleSpaceEngineException e1) {
+						e1.printStackTrace();
+					}
+					if (localmatch == null) {
+						try {
+							tuple.setRepli(ReplicableTuple.IS_REPLICA);
+							out(tuple);
+							if (LimeServer.getServer().isDebugOn()){
+								System.out.println("\n******* replication ********\n");
+							}
+						} catch (TupleSpaceEngineException e1) {
+							e1.printStackTrace();
+						}
+					} else {
+						// 如果本地已经有一个备份，检查版本
+						// 如果版本号大于本地版本，更新
+						if (tuple.getVersion() > localmatch.getVersion()) {
+							switch (consistencyMode) {
+							case ReplicableLimeTupleSpace.CONSISTENCY_MODE_ANY: {
+								try {
+									lts.in(localmatch.getTuple()); // remove the old copy
+									tuple.setRepli(ReplicableTuple.IS_REPLICA);
+									lts.out(tuple.getTuple());     //  add the new copy
+								} catch (TupleSpaceEngineException e1) {
+									e1.printStackTrace();
+								}
+								break;
+							}
+							case ReplicableLimeTupleSpace.CONSISTENCY_MODE_MASTER: {
+								if (tuple.isMaster()){
+									try {
+										lts.in(localmatch.getTuple()); // remove the old copy
+										tuple.setRepli(ReplicableTuple.IS_REPLICA);
+										lts.out(tuple.getTuple());     //  add the new copy
+									} catch (TupleSpaceEngineException e1) {
+										e1.printStackTrace();
+									}
+								}
+								break;
+							}
+							case ReplicableLimeTupleSpace.CONSISTENCY_MODE_NEVER: {
+								break;
+							}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -196,9 +257,10 @@ public class ReplicableLimeTupleSpace{
 			// 根据
 			ReplicableTuple localmatch = null;
 			try {
-				template.setID(tuple.getID());
+				ReplicableTuple t = new ReplicableTuple(template.getTuple());
+				t.setID(tuple.getID());
 				Tuple temp = (Tuple) lts.rdp(local,
-						AgentLocation.UNSPECIFIED, template.getTuple());
+						AgentLocation.UNSPECIFIED, t.getTuple());
 				if (temp != null){
 					localmatch = new ReplicableTuple(temp);
 				}
@@ -207,7 +269,11 @@ public class ReplicableLimeTupleSpace{
 			}
 			if (localmatch == null) {
 				try {
+					tuple.setRepli(ReplicableTuple.IS_REPLICA);
 					out(tuple);
+					if (LimeServer.getServer().isDebugOn()){
+						System.out.println("\n******* replication ********\n");
+					}
 				} catch (TupleSpaceEngineException e) {
 					e.printStackTrace();
 				}
@@ -219,6 +285,7 @@ public class ReplicableLimeTupleSpace{
 					case ReplicableLimeTupleSpace.CONSISTENCY_MODE_ANY: {
 						try {
 							lts.in(localmatch.getTuple()); // remove the old copy
+							tuple.setRepli(ReplicableTuple.IS_REPLICA);
 							lts.out(tuple.getTuple());     //  add the new copy
 						} catch (TupleSpaceEngineException e) {
 							e.printStackTrace();
@@ -229,6 +296,7 @@ public class ReplicableLimeTupleSpace{
 						if (tuple.isMaster()){
 							try {
 								lts.in(localmatch.getTuple()); // remove the old copy
+								tuple.setRepli(ReplicableTuple.IS_REPLICA);
 								lts.out(tuple.getTuple());     //  add the new copy
 							} catch (TupleSpaceEngineException e) {
 								e.printStackTrace();
