@@ -17,6 +17,7 @@ import lime.UbiquitousReaction;
 public class ReplicableLimeTupleSpace{
     ILimeAgent creator = null;
 	private LimeTupleSpace lts;
+	private AgentLocation local;
 	
 	public static final int REPLICATION_MODE_MASTER = 1;
 	public static final int REPLICATION_MODE_ANY = 2;
@@ -34,6 +35,7 @@ public class ReplicableLimeTupleSpace{
 			lts = new LimeTupleSpace(name);
 			this.name = name;
 			creator = (ILimeAgent)t;
+			local = new AgentLocation(creator.getMgr().getID()); 
 			initReaction();
 		} catch (IllegalTupleSpaceNameException e) {
 			e.printStackTrace();
@@ -114,6 +116,20 @@ public class ReplicableLimeTupleSpace{
 	}
 	// REPLICATION-SPECIFIC OPERATIONS
 	public ReplicableTuple change(ReplicableTuple template, ReplicableTuple t) {
+		try {
+			Tuple temp = (Tuple) lts.inp(local,AgentLocation.UNSPECIFIED,template.getTuple());
+			if(temp != null){
+				ReplicableTuple tuple = new ReplicableTuple(temp);
+				t.setCur(tuple.getCur());
+				t.setDest(tuple.getDest());
+				t.setID(tuple.getID());
+				t.setVersion(tuple.getVersion()+1);
+				t.setRepli(ReplicableTuple.IS_MASTER);
+				lts.out(t.getTuple());
+			}
+		} catch (TupleSpaceEngineException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 	
@@ -147,18 +163,17 @@ public class ReplicableLimeTupleSpace{
 	class ReplicationListener implements ReactionListener {
 		private int replicationMode;
 		private int consistencyMode;
-		private AgentLocation local;
+
 		private ReplicableTuple template;
 		public ReplicationListener(int repmode, int conmode , ReplicableTuple template) {
 			this.replicationMode = repmode;
 			this.consistencyMode = conmode;
 			this.template = template;
-			local = new AgentLocation(creator.getMgr().getID()); 
 		}
 
 		@Override
 		public void reactsTo(ReactionEvent e) {
-			ReplicableTuple tuple = (ReplicableTuple) e.getEventTuple();
+			ReplicableTuple tuple = new ReplicableTuple(e.getEventTuple());
 			// if is local, do nothing
 			if (!tuple.getCur().equals(local)) {
 				switch (replicationMode) {
@@ -182,8 +197,11 @@ public class ReplicableLimeTupleSpace{
 			ReplicableTuple localmatch = null;
 			try {
 				template.setID(tuple.getID());
-				localmatch = (ReplicableTuple) lts.rdp(local,
+				Tuple temp = (Tuple) lts.rdp(local,
 						AgentLocation.UNSPECIFIED, template.getTuple());
+				if (temp != null){
+					localmatch = new ReplicableTuple(temp);
+				}
 			} catch (TupleSpaceEngineException e) {
 				e.printStackTrace();
 			}

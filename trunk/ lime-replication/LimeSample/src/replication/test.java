@@ -7,7 +7,7 @@ import lime.LimeServer;
 import lime.StationaryAgent;
 
 public class test extends StationaryAgent {
-	static final int NUMLOCALPARAMETERS = 1;
+	static final int NUMLOCALPARAMETERS = 2;
 	String msg = null;
 
 	// This constructor receives the parameters we passed in server.loadAgent()
@@ -36,6 +36,8 @@ public class test extends StationaryAgent {
 		try {
 			LimeServer.getServer().loadAgent("replication.test",
 					new String[] { args[0] });
+			LimeServer.getServer().loadAgent("replication.test",
+					new String[] { args[1] });
 		} catch (LimeException le) {
 			System.out.println("Trouble Loading the agent");
 			le.printStackTrace();
@@ -49,9 +51,14 @@ public class test extends StationaryAgent {
 		AgentLocation local = new AgentLocation(localId);
 		ReplicableTuple myTuple = (ReplicableTuple) rlts.createReplicableTuple()
 									.setCur(new AgentLocation(getMgr().getID())).addActual(msg);
+		rlts.setShared(true);
+		ReplicableTuple template = new ReplicableTuple().addFormal(String.class);
+		rlts.addReplicaRequest(template,ReplicableLimeTupleSpace.REPLICATION_MODE_ANY,
+				ReplicableLimeTupleSpace.CONSISTENCY_MODE_ANY);
 		// create the new tuple space (default name)
 		try {
 			rlts.out(myTuple);
+			System.out.println(local.toString() + "pre: ");
 			rlts.print();
 		} catch (LimeException le) {
 			System.out
@@ -59,10 +66,9 @@ public class test extends StationaryAgent {
 			le.printStackTrace();
 			System.exit(1);
 		}
-
-		System.out.println("I wrote the tuple: " + myTuple.getTuple());
-
+		
+		System.out.println(local.toString() + "post: ");
+		rlts.print();
 		// shut down Lime gracefully
-		LimeServer.getServer().shutdown(true);
 	}
 }
