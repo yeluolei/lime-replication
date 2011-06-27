@@ -203,8 +203,8 @@ public class ReplicableLimeTupleSpace{
 				
 				if (entercon){
 					ReplicableTuple localmatch = null;
+					ReplicableTuple t = new ReplicableTuple();
 					try {
-						ReplicableTuple t = new ReplicableTuple();
 						for (int i = 0 ; i < template.getFields().length ; i++){
 							t.add(template.getFields()[i]);
 						}
@@ -236,7 +236,8 @@ public class ReplicableLimeTupleSpace{
 							switch (consistencyMode) {
 							case ReplicableLimeTupleSpace.CONSISTENCY_MODE_ANY: {
 								try {
-									lts.in(localmatch.getTuple()); // remove the old copy
+									lts.inp(local,
+											AgentLocation.UNSPECIFIED, t.getTuple()); // remove the old copy
 									tuple.setRepli(ReplicableTuple.IS_REPLICA);
 									lts.out(tuple.getTuple());     //  add the new copy
 								} catch (TupleSpaceEngineException e1) {
@@ -247,7 +248,8 @@ public class ReplicableLimeTupleSpace{
 							case ReplicableLimeTupleSpace.CONSISTENCY_MODE_MASTER: {
 								if (tuple.isMaster()){
 									try {
-										lts.in(localmatch.getTuple()); // remove the old copy
+										lts.inp(local,
+												AgentLocation.UNSPECIFIED, t.getTuple());
 										tuple.setRepli(ReplicableTuple.IS_REPLICA);
 										lts.out(tuple.getTuple());     //  add the new copy
 									} catch (TupleSpaceEngineException e1) {
