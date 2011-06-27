@@ -16,6 +16,7 @@ import devutil.Queue;
 import lime.AgentLocation;
 import lime.LimeException;
 import lime.LimeServer;
+import lime.LimeTupleID;
 import lime.RegisteredReaction;
 import lime.StationaryAgent;
 import lime.TupleSpaceEngineException;
@@ -70,7 +71,7 @@ public class test extends StationaryAgent implements ActionListener{
 			@Override
 			public void run() {
 				rlts.setShared(false);
-				jButton2.setEnabled(false);
+				jButton4.setEnabled(false);
 				ReplicableTuple template = new ReplicableTuple().addFormal(String.class);
 				reaction = rlts.addReplicaRequest(template,ReplicableLimeTupleSpace.REPLICATION_MODE_ANY,
 						ReplicableLimeTupleSpace.CONSISTENCY_MODE_ANY);
@@ -114,71 +115,16 @@ public class test extends StationaryAgent implements ActionListener{
 	}
 	
 	private static final long serialVersionUID = 1L;
-	private JPanel jContentPane = null;  //  @jve:decl-index=0:visual-constraint="155,56"
-	private JPanel jPanel = null;
+	private JFrame mainwindow = null;
+	private JPanel jContentPane = null;
 	private JTextField jTextField = null;
 	private JButton jButton = null;
 	private JButton jButton1 = null;
 	private JButton jButton2 = null;
+	private JPanel jPanel = null;
 	private JButton jButton3 = null;
-	private JFrame mainwindow = null;
+	private JButton jButton4 = null;
 		
-
-	/**
-	 * This method initializes this
-	 * 
-	 * @return void
-	 */
-	private void initialize() {
-		mainwindow.setSize(281, 130);
-		mainwindow.setContentPane(getJPanel());
-		mainwindow.setTitle(new AgentLocation(getMgr().getID()).toString());
-	}
-
-	/**
-	 * This method initializes jContentPane
-	 * 
-	 * @return javax.swing.JPanel
-	 */
-	private JPanel getJContentPane() {
-		if (jContentPane == null) {
-			jContentPane = new JPanel();
-			jContentPane.setLayout(new BorderLayout());
-		}
-		return jContentPane;
-	}
-
-	/**
-	 * This method initializes jPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
-	 */
-	private JPanel getJPanel() {
-		if (jPanel == null) {
-			jPanel = new JPanel();
-			jPanel.setLayout(new BorderLayout());
-			jPanel.add(getJTextField(), BorderLayout.NORTH);
-			jPanel.add(getJButton(), BorderLayout.WEST);
-			jPanel.add(getJButton1(), BorderLayout.CENTER);
-			jPanel.add(getJButton2(), BorderLayout.EAST);
-			jPanel.add(getJButton3(),BorderLayout.SOUTH);
-		}
-		return jPanel;
-	}
-
-	/**
-	 * This method initializes jTextField	
-	 * 	
-	 * @return javax.swing.JTextField	
-	 */
-	private JTextField getJTextField() {
-		if (jTextField == null) {
-			jTextField = new JTextField();
-			jTextField.setText("");
-		}
-		return jTextField;
-	}
-
 	/**
 	 * This method initializes jButton	
 	 * 	
@@ -202,9 +148,9 @@ public class test extends StationaryAgent implements ActionListener{
 	private JButton getJButton1() {
 		if (jButton1 == null) {
 			jButton1 = new JButton();
-			jButton1.setText("shared");
+			jButton1.setText("update");
 			jButton1.addActionListener(this);
-			jButton1.setActionCommand("shared");
+			jButton1.setActionCommand("update");
 		}
 		return jButton1;
 	}
@@ -217,9 +163,9 @@ public class test extends StationaryAgent implements ActionListener{
 	private JButton getJButton2() {
 		if (jButton2 == null) {
 			jButton2 = new JButton();
-			jButton2.setText("unshared");
+			jButton2.setText("print");
 			jButton2.addActionListener(this);
-			jButton2.setActionCommand("unshared");
+			jButton2.setActionCommand("print");
 		}
 		return jButton2;
 	}
@@ -227,11 +173,79 @@ public class test extends StationaryAgent implements ActionListener{
 	private JButton getJButton3() {
 		if (jButton3 == null) {
 			jButton3 = new JButton();
-			jButton3.setText("print");
+			jButton3.setText("shared");
 			jButton3.addActionListener(this);
-			jButton3.setActionCommand("print");
+			jButton3.setActionCommand("shared");
 		}
 		return jButton3;
+	}
+	
+	private JButton getJButton4() {
+		if (jButton4 == null) {
+			jButton4 = new JButton();
+			jButton4.setText("unshared");
+			jButton4.addActionListener(this);
+			jButton4.setActionCommand("unshared");
+		}
+		return jButton4;
+	}
+	
+
+	
+	/**
+	 * This method initializes this
+	 * 
+	 * @return void
+	 */
+	private void initialize() {
+		mainwindow.setSize(402, 146);
+		mainwindow.setContentPane(getJContentPane());
+		mainwindow.setTitle(new AgentLocation(getMgr().getID()).toString());
+	}
+
+	/**
+	 * This method initializes jContentPane	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getJContentPane() {
+		if (jContentPane == null) {
+			jContentPane = new JPanel();
+			jContentPane.setLayout(new BorderLayout());
+			jContentPane.add(getJTextField(), BorderLayout.NORTH);
+			jContentPane.add(getJButton(), BorderLayout.WEST);
+			jContentPane.add(getJButton1(), BorderLayout.EAST);
+			jContentPane.add(getJButton2(), BorderLayout.SOUTH);
+			jContentPane.add(getJPanel(), BorderLayout.CENTER);
+		}
+		return jContentPane;
+	}
+
+	/**
+	 * This method initializes jTextField	
+	 * 	
+	 * @return javax.swing.JTextField	
+	 */
+	private JTextField getJTextField() {
+		if (jTextField == null) {
+			jTextField = new JTextField();
+		}
+		return jTextField;
+	}
+
+	/**
+	 * This method initializes jPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getJPanel() {
+		if (jPanel == null) {
+			jPanel = new JPanel();
+			jPanel.setLayout(new BorderLayout());
+			jPanel.add(getJButton3(), BorderLayout.NORTH);
+			jPanel.add(getJButton4(), BorderLayout.SOUTH);
+		}
+		return jPanel;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -261,8 +275,8 @@ public class test extends StationaryAgent implements ActionListener{
 				@Override
 				public void run() {
 					rlts.setShared(true);
-					jButton1.setEnabled(false);
-					jButton2.setEnabled(true);
+					jButton3.setEnabled(false);
+					jButton4.setEnabled(true);
 					System.out.println("\n\n---------\nshare open\n----------\n\n");
 				}
 			});
@@ -271,19 +285,33 @@ public class test extends StationaryAgent implements ActionListener{
 				@Override
 				public void run() {
 					rlts.setShared(false);
-					jButton1.setEnabled(true);
-					jButton2.setEnabled(false);
+					jButton3.setEnabled(true);
+					jButton4.setEnabled(false);
 					//rlts.removeReplicaRequest(reaction);
 					System.out.println("\n\n---------\nshare closed\n----------\n\n");
 				}
 			});
-		}else {
+		}else if (e.getActionCommand().equals("print")){
 			opque.add(new Runnable() {
 				@Override
 				public void run() {
 					System.out.println("\n\n----------\n" + new AgentLocation(getMgr().getID()).toString() + ":");
 					rlts.print();
 					System.out.println("-------------\n\n");	
+				}
+			});
+		}else {
+			opque.add(new Runnable() {
+				@Override
+				public void run() {
+					ReplicableTuple tuplet = new ReplicableTuple();
+					tuplet.addFormal(String.class);
+					tuplet.setID(new LimeTupleID(1));
+					
+					
+					ReplicableTuple t = new ReplicableTuple();
+					t.addActual("updated");
+					rlts.change(tuplet, t);
 				}
 			});
 		}
