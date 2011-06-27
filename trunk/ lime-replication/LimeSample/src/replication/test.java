@@ -71,6 +71,9 @@ public class test extends StationaryAgent implements ActionListener{
 			public void run() {
 				rlts.setShared(false);
 				jButton2.setEnabled(false);
+				ReplicableTuple template = new ReplicableTuple().addFormal(String.class);
+				reaction = rlts.addReplicaRequest(template,ReplicableLimeTupleSpace.REPLICATION_MODE_ANY,
+						ReplicableLimeTupleSpace.CONSISTENCY_MODE_ANY);
 			}
 		});
 		
@@ -260,9 +263,6 @@ public class test extends StationaryAgent implements ActionListener{
 					rlts.setShared(true);
 					jButton1.setEnabled(false);
 					jButton2.setEnabled(true);
-					ReplicableTuple template = new ReplicableTuple().addFormal(String.class);
-					reaction = rlts.addReplicaRequest(template,ReplicableLimeTupleSpace.REPLICATION_MODE_ANY,
-							ReplicableLimeTupleSpace.CONSISTENCY_MODE_ANY);
 					System.out.println("\n\n---------\nshare open\n----------\n\n");
 				}
 			});
@@ -273,7 +273,7 @@ public class test extends StationaryAgent implements ActionListener{
 					rlts.setShared(false);
 					jButton1.setEnabled(true);
 					jButton2.setEnabled(false);
-					rlts.removeReplicaRequest(reaction);
+					//rlts.removeReplicaRequest(reaction);
 					System.out.println("\n\n---------\nshare closed\n----------\n\n");
 				}
 			});
