@@ -1,5 +1,6 @@
 package replication;
 
+import lights.adapters.Field;
 import lights.adapters.Tuple;
 import lights.interfaces.ITuple;
 import lime.AgentLocation;
@@ -142,6 +143,7 @@ public class ReplicableLimeTupleSpace{
 		try {
 			Reaction reaction = new UbiquitousReaction(template.getTuple(),
 					new ReplicationListener(replicationMode, consistencyMode,template),
+				//	new testlistener(),
 					Reaction.ONCEPERTUPLE);
 			return lts.addWeakReaction(new Reaction[]{reaction})[0];
 		} catch (TupleSpaceEngineException e) {
@@ -162,6 +164,13 @@ public class ReplicableLimeTupleSpace{
 	}
 	
 	@SuppressWarnings("serial")
+	class testlistener implements ReactionListener{
+		public void reactsTo(ReactionEvent e) {
+			System.out.println(local.toString() + " : "+e.getEventTuple().toString()+"\n");
+		}
+	}
+	
+	@SuppressWarnings("serial")
 	class ReplicationListener implements ReactionListener {
 		private int replicationMode;
 		private int consistencyMode;
@@ -175,7 +184,7 @@ public class ReplicableLimeTupleSpace{
 		@Override
 		public void reactsTo(ReactionEvent e) {
 			ReplicableTuple tuple = new ReplicableTuple(e.getEventTuple());
-			System.out.println(e.getEventTuple().toString()+"\n");
+			System.out.println(local.toString() + " : "+e.getEventTuple().toString()+"\n");
 			// if is local, do nothing
 			if (!tuple.getCur().equals(local)) {
 				boolean entercon = false;
@@ -195,14 +204,18 @@ public class ReplicableLimeTupleSpace{
 				if (entercon){
 					ReplicableTuple localmatch = null;
 					try {
-						ReplicableTuple t = new ReplicableTuple(template.getTuple());
+						ReplicableTuple t = new ReplicableTuple();
+						for (int i = 0 ; i < template.getFields().length ; i++){
+							t.add(template.getFields()[i]);
+						}
 						t.setID(tuple.getID());
 						Tuple temp = (Tuple) lts.rdp(local,
 								AgentLocation.UNSPECIFIED, t.getTuple());
 						if (temp != null){
 							localmatch = new ReplicableTuple(temp);
 						}
-					} catch (TupleSpaceEngineException e1) {
+					}
+					catch (TupleSpaceEngineException e1) {
 						e1.printStackTrace();
 					}
 					if (localmatch == null) {
@@ -212,6 +225,7 @@ public class ReplicableLimeTupleSpace{
 							if (LimeServer.getServer().isDebugOn()){
 								System.out.println("\n******* replication ********\n");
 							}
+							
 						} catch (TupleSpaceEngineException e1) {
 							e1.printStackTrace();
 						}
