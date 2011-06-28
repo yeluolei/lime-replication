@@ -31,23 +31,11 @@ public class ReplicableTuple {
 	}
 	public ReplicableTuple(String name , int id){
 		tuple = new Tuple();
-//		tuple.addFormal(AgentLocation.class);   // origCur
-//		tuple.addFormal(AgentLocation.class);   // origDest
-//		tuple.addFormal(Integer.class);     // isReplica
-//		tuple.addFormal(LimeTupleID.class); // ID
-//		tuple.addFormal(Integer.class);		// Version
-		
-		
-		tuple.addActual(AgentLocation.UNSPECIFIED);
-		tuple.addActual(AgentLocation.UNSPECIFIED);
-		tuple.addActual(IS_MASTER);
-		tuple.addActual(new LimeTupleID(id));
-		tuple.addActual(DEFAULT_VERSION);
-//		tuple.get(0).setToActual(AgentLocation.UNSPECIFIED);
-//		tuple.get(1).setToActual(AgentLocation.UNSPECIFIED);
-//		tuple.get(2).setToActual(IS_MASTER);
-//		tuple.get(3).setToActual(new LimeTupleID(id));
-//		tuple.get(4).setToActual(DEFAULT_VERSION);
+		tuple.addActual(AgentLocation.UNSPECIFIED); // origCur
+		tuple.addActual(AgentLocation.UNSPECIFIED); // origDest
+		tuple.addActual(IS_MASTER);             	// isReplica
+		tuple.addActual(new LimeTupleID(id));		// ID
+		tuple.addActual(DEFAULT_VERSION);			// Version
 	}
 	
 	public ReplicableTuple updateVersion(){

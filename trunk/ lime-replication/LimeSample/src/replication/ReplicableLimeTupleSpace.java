@@ -143,7 +143,6 @@ public class ReplicableLimeTupleSpace{
 		try {
 			Reaction reaction = new UbiquitousReaction(template.getTuple(),
 					new ReplicationListener(replicationMode, consistencyMode,template),
-				//	new testlistener(),
 					Reaction.ONCEPERTUPLE);
 			return lts.addWeakReaction(new Reaction[]{reaction})[0];
 		} catch (TupleSpaceEngineException e) {
@@ -160,13 +159,6 @@ public class ReplicableLimeTupleSpace{
 			e.printStackTrace();
 		} catch (NoSuchReactionException e) {
 			e.printStackTrace();
-		}
-	}
-	
-	@SuppressWarnings("serial")
-	class testlistener implements ReactionListener{
-		public void reactsTo(ReactionEvent e) {
-			System.out.println(local.toString() + " : "+e.getEventTuple().toString()+"\n");
 		}
 	}
 	
@@ -263,66 +255,6 @@ public class ReplicableLimeTupleSpace{
 							}
 							}
 						}
-					}
-				}
-			}
-		}
-
-		private void cons(ReplicableTuple tuple) {
-			// 从自己的空间中找到ID相同的
-			// 根据
-			ReplicableTuple localmatch = null;
-			try {
-				ReplicableTuple t = new ReplicableTuple(template.getTuple());
-				t.setID(tuple.getID());
-				Tuple temp = (Tuple) lts.rdp(local,
-						AgentLocation.UNSPECIFIED, t.getTuple());
-				if (temp != null){
-					localmatch = new ReplicableTuple(temp);
-				}
-			} catch (TupleSpaceEngineException e) {
-				e.printStackTrace();
-			}
-			if (localmatch == null) {
-				try {
-					tuple.setRepli(ReplicableTuple.IS_REPLICA);
-					out(tuple);
-					if (LimeServer.getServer().isDebugOn()){
-						System.out.println("\n******* replication ********\n");
-					}
-				} catch (TupleSpaceEngineException e) {
-					e.printStackTrace();
-				}
-			} else {
-				// 如果本地已经有一个备份，检查版本
-				// 如果版本号大于本地版本，更新
-				if (tuple.getVersion() > localmatch.getVersion()) {
-					switch (consistencyMode) {
-					case ReplicableLimeTupleSpace.CONSISTENCY_MODE_ANY: {
-						try {
-							lts.in(localmatch.getTuple()); // remove the old copy
-							tuple.setRepli(ReplicableTuple.IS_REPLICA);
-							lts.out(tuple.getTuple());     //  add the new copy
-						} catch (TupleSpaceEngineException e) {
-							e.printStackTrace();
-						}
-						break;
-					}
-					case ReplicableLimeTupleSpace.CONSISTENCY_MODE_MASTER: {
-						if (tuple.isMaster()){
-							try {
-								lts.in(localmatch.getTuple()); // remove the old copy
-								tuple.setRepli(ReplicableTuple.IS_REPLICA);
-								lts.out(tuple.getTuple());     //  add the new copy
-							} catch (TupleSpaceEngineException e) {
-								e.printStackTrace();
-							}
-						}
-						break;
-					}
-					case ReplicableLimeTupleSpace.CONSISTENCY_MODE_NEVER: {
-						break;
-					}
 					}
 				}
 			}
