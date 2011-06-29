@@ -1,8 +1,6 @@
 package replication;
 
-import lights.adapters.Field;
 import lights.adapters.Tuple;
-import lights.interfaces.ITuple;
 import lime.AgentLocation;
 import lime.HostLocation;
 import lime.ILimeAgent;
@@ -123,12 +121,14 @@ public class ReplicableLimeTupleSpace{
 			Tuple temp = (Tuple) lts.inp(local,AgentLocation.UNSPECIFIED,template.getTuple());
 			if(temp != null){
 				ReplicableTuple tuple = new ReplicableTuple(temp);
-				t.setCur(tuple.getCur());
-				t.setDest(tuple.getDest());
-				t.setID(tuple.getID());
-				t.setVersion(tuple.getVersion()+1);
-				t.setRepli(ReplicableTuple.IS_MASTER);
-				lts.out(t.getTuple());
+				if (tuple.isMaster()){
+					t.setCur(tuple.getCur());
+					t.setDest(tuple.getDest());
+					t.setID(tuple.getID());
+					t.setVersion(tuple.getVersion()+1);
+					t.setRepli(ReplicableTuple.IS_MASTER);
+					lts.out(t.getTuple());
+				}
 			}
 		} catch (TupleSpaceEngineException e) {
 			e.printStackTrace();
